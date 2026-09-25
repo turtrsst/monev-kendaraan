@@ -1,0 +1,26 @@
+# Fleet Logbook — Apache/XAMPP (docroot = public/)
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Aset yang ada dilayani langsung
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Sembunyikan file tersembunyi (.env dsb. tidak berada di sini, tetapi berjaga)
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# Jangan layani file log/psql bila ada
+<FilesMatch "\.(log|sql|md)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "same-origin"
+</IfModule>
