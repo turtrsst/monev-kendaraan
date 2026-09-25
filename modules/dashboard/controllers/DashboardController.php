@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Dashboard\Controllers;
 
+use App\Core\DB;
 use App\Core\Request;
 use App\Core\Session;
 use App\Core\View;
@@ -16,16 +17,29 @@ final class DashboardController
         $user = Session::user();
         $role = $user['role'] ?? 'driver';
 
-        // Statistik Phase 1 = fondasi saja; data aktual menyusul Phase 2–10
+        $totalVehicles = 0;
+        $totalDrivers = 0;
+        $totalAssignmentsToday = 0;
+        $totalAmbulances = 0;
+
+        try {
+            $totalVehicles = (int)DB::scalar('SELECT COUNT(*) FROM vehicles');
+            $totalDrivers = (int)DB::scalar('SELECT COUNT(*) FROM drivers');
+            $totalAmbulances = (int)DB::scalar('SELECT COUNT(*) FROM ambulance_details');
+            $totalAssignmentsToday = (int)DB::scalar('SELECT COUNT(*) FROM assignments WHERE assignment_date = CURRENT_DATE');
+        } catch (\Throwable) {
+            // DB fallback if tables not yet migrated
+        }
+
         $stats = [
-            ['label' => 'Total Kendaraan', 'value' => '0', 'icon' => 'bi-truck', 'note' => 'Master data (Phase 2)'],
-            ['label' => 'Total Driver', 'value' => '0', 'icon' => 'bi-person-badge', 'note' => 'Master data (Phase 2)'],
-            ['label' => 'Trip Hari Ini', 'value' => '0', 'icon' => 'bi-route', 'note' => 'Modul trip (Phase 3)'],
+            ['label' => 'Total Kendaraan', 'value' => (string)$totalVehicles, 'icon' => 'bi-car-front', 'note' => 'Armada terdaftar'],
+            ['label' => 'Unit Ambulans', 'value' => (string)$totalAmbulances, 'icon' => 'bi-hospital', 'note' => 'Profil ambulans aktif'],
+            ['label' => 'Total Driver', 'value' => (string)$totalDrivers, 'icon' => 'bi-person-badge', 'note' => 'Pengemudi resmi'],
+            ['label' => 'Penugasan Hari Ini', 'value' => (string)$totalAssignmentsToday, 'icon' => 'bi-clipboard-check', 'note' => date('d/m/Y')],
+            ['label' => 'Trip Hari Ini', 'value' => '0', 'icon' => 'bi-route', 'note' => 'Menyusul Phase 3'],
             ['label' => 'Trip Aktif', 'value' => '0', 'icon' => 'bi-broadcast-pin', 'note' => 'Monitoring (Phase 10)'],
-            ['label' => 'Total KM', 'value' => '0', 'icon' => 'bi-speedometer2', 'note' => '—'],
-            ['label' => 'Total BBM', 'value' => 'Rp 0', 'icon' => 'bi-fuel-pump', 'note' => '—'],
-            ['label' => 'Total E-Toll', 'value' => 'Rp 0', 'icon' => 'bi-credit-card', 'note' => '—'],
-            ['label' => 'Total Biaya', 'value' => 'Rp 0', 'icon' => 'bi-cash-stack', 'note' => '—'],
+            ['label' => 'Total BBM', 'value' => 'Rp 0', 'icon' => 'bi-fuel-pump', 'note' => 'Menyusul Phase 6'],
+            ['label' => 'Total E-Toll', 'value' => 'Rp 0', 'icon' => 'bi-credit-card', 'note' => 'Menyusul Phase 7'],
         ];
 
         $notifications = $user ? Notification::latest((int)$user['id'], 5) : [];
