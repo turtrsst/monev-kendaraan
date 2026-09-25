@@ -1,0 +1,47 @@
+=== PHASE 2 GATE RUNNER — 2026-09-25T09:42:10Z ===
+
+--- [1/4] Static Code & Scope Checks ---
+[PASS] bash syntax: tests/http_phase2.sh
+[PASS] bash syntax: tests/run_phase2_gate.sh
+[PASS] migration file exists: 003_phase2_vehicles.sql
+[PASS] migration file exists: 004_phase2_drivers.sql
+[PASS] migration file exists: 005_phase2_ambulances.sql
+[PASS] migration file exists: 006_phase2_assignments.sql
+[PASS] model exists: Vehicle.php
+[PASS] model exists: Driver.php
+[PASS] model exists: Ambulance.php
+[PASS] model exists: Assignment.php
+[PASS] service exists: VehicleService.php
+[PASS] service exists: DriverService.php
+[PASS] service exists: AmbulanceService.php
+[PASS] service exists: AssignmentService.php
+[PASS] validator exists: VehicleValidator.php
+[PASS] validator exists: DriverValidator.php
+[PASS] validator exists: AmbulanceValidator.php
+[PASS] validator exists: AssignmentValidator.php
+[PASS] controller exists: modules/vehicles/controllers/VehicleController.php
+[PASS] controller exists: modules/drivers/controllers/DriverController.php
+[PASS] controller exists: modules/ambulances/controllers/AmbulanceController.php
+[PASS] controller exists: modules/assignments/controllers/AssignmentController.php
+[PASS] controller exists: api/vehicles/VehicleApiController.php
+[PASS] controller exists: api/drivers/DriverApiController.php
+[PASS] controller exists: api/ambulances/AmbulanceApiController.php
+[PASS] controller exists: api/assignments/AssignmentApiController.php
+
+--- [2/4] Hard Scope Lock (Verification No Phase 3) ---
+[PASS] no TripService.php in app/services/
+[PASS] no Trip.php in app/models/
+[PASS] no Trip controllers in modules/ or api/
+[PASS] no Phase 3+ services (GPS, OCR, Expense)
+[PASS] no git conflict markers found
+
+--- [3/4] Runtime Environment Availability ---
+[INFO] PHP CLI unavailable in this environment
+[INFO] MySQL/MariaDB unavailable in this environment
+
+--- [4/4] Phase 2 Verdict ---
+STATIC CHECKS PASS: 31
+STATIC CHECKS FAIL: 0
+PHP RUNTIME: NOT RUNNABLE — PHP CLI unavailable
+DATABASE RUNTIME: NOT RUNNABLE — Database daemon unavailable
+PHASE 2 GATE: NOT APPROVED (Awaiting PHP 8.2+ & MySQL isolated test run)
