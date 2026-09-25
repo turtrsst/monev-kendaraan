@@ -1,0 +1,60 @@
+PASS	config: timezone Asia/Jakarta	Asia/Jakarta
+PASS	config: session idle = 1800 dtk (30 mnt)	
+PASS	config: session absolute = 43200 dtk (720 mnt)	
+PASS	config: DB name benar	
+PASS	config: login max attempts = 5	
+PASS	config: .env TIDAK di-commit	
+PASS	e(): escape HTML	&lt;script&gt;alert(1)&lt;/script&gt;&quot;&#039;&amp;
+PASS	e(): tanpa tag mentah	
+PASS	csrf: token 64 hex	6caabcddac76…
+PASS	csrf: verify token benar	
+PASS	csrf: tolak token salah	
+PASS	csrf: tolak token kosong	
+PASS	csrf: tolak null	
+PASS	validator: login wajib isi	
+PASS	validator: username min 3	
+PASS	validator: username charset	
+PASS	validator: login valid	
+PASS	validator: password salah saat ini	
+PASS	validator: password baru min 8	
+PASS	validator: password harus ada angka	
+PASS	validator: konfirmasi harus sama	
+PASS	validator: password baru ≠ lama	
+PASS	validator: ganti password valid	
+PASS	db: koneksi PDO (emulasi prepare OFF)	
+PASS	db: time_zone koneksi = +07:00	
+PASS	db: tabel `roles` ada	
+PASS	db: tabel `users` ada	
+PASS	db: tabel `audit_logs` ada	
+PASS	db: tabel `login_attempts` ada	
+PASS	db: tabel `settings` ada	
+PASS	db: tabel `notifications` ada	
+PASS	db: tabel `schema_migrations` ada	
+PASS	db: semua migrasi diterapkan	
+PASS	seed: 4 role (admin/operator/driver/pimpinan)	jumlah=4
+PASS	seed: akun admin ada	
+PASS	seed: admin role=admin	
+PASS	seed: admin force_password_change=1	
+PASS	seed: admin password memakai password_hash (bcrypt/argon2)	
+PASS	seed: password BUKAN plaintext (bukan tebakan umum)	
+PASS	seed: password_verify(TEST_ADMIN_PASSWORD) cocok	
+PASS	seed: hospital = RSUP dr. Soeradji Tirtonegoro Klaten	RSUP dr. Soeradji Tirtonegoro Klaten
+PASS	seed: radius default = 100 m	100
+PASS	seed: foto struk BBM NON-blocking (0)	0
+PASS	seed: logo via setting (bukan hard-code)	
+PASS	settings: get logo_path	
+PASS	settings: getInt radius	
+PASS	settings: getBool struk non-blocking	
+PASS	audit: log tersimpan	
+PASS	audit: old_data/new_data JSON terisi	
+PASS	throttle: hitung kegagalan 15 menit	count=2
+PASS	throttle: tidak bocor ke user lain	
+PASS	session: idle 30 menit → expired	
+PASS	session: absolute 720 menit → expired	
+PASS	session: checkTimeouts TIDAK memperpanjang idle	last_activity tidak berubah
+PASS	session: markActivity (heartbeat) memperbarui last_activity	
+PASS	db: tolak identifier berbahaya	
+PASS	log: file log harian dibuat	
+PASS	struktur: public/index.php ada	
+PASS	struktur: docroot publik TIDAK memuat .env	
+PASS	struktur: tidak ada file >800 baris di app/ & modules/	

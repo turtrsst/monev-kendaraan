@@ -1,0 +1,150 @@
+=== PHASE 1 GATE — 2026-09-25T04:43:53Z ===
+
+--- [1/6] Runtime PHP ---
+[PASS] PHP: 8.2.34 (/home/user/build/opt/php/bin/php)
+[PASS] ext: pdo
+[PASS] ext: pdo_mysql
+[PASS] ext: mbstring
+[PASS] ext: json
+[PASS] ext: session
+[PASS] ext: fileinfo
+[PASS] ext: filter
+[PASS] ext: tokenizer
+[PASS] ext: ctype
+[PASS] ext: posix
+[PASS] PHP >= 8.2
+
+--- [2/6] Database (MariaDB) + migrasi ---
+[PASS] MariaDB running (socket /home/user/build/run/mysqld.sock)
+[PASS] database + user fleet siap [DB_READY]
+[PASS] migrate.php sukses (lihat storage/logs/migrate-gate.log)
+    | Koneksi OK → kendaraan_logbook
+    | [SKIP]    001_init_foundation.sql (sudah diterapkan)
+    | [SKIP]    002_seed_foundation.sql (sudah diterapkan)
+    | Selesai. 2 file migrasi, 0 diterapkan baru.
+[PASS] seed admin: password bootstrap dirotasi (hanya untuk gate ini)
+
+--- [3/6] Unit tests ---
+=== PHASE 1 UNIT TESTS ===
+
+[PASS] config: timezone Asia/Jakarta — Asia/Jakarta
+[PASS] config: session idle = 1800 dtk (30 mnt)
+[PASS] config: session absolute = 43200 dtk (720 mnt)
+[PASS] config: DB name benar
+[PASS] config: login max attempts = 5
+[PASS] config: .env TIDAK di-commit
+[PASS] e(): escape HTML — &lt;script&gt;alert(1)&lt;/script&gt;&quot;&#039;&amp;
+[PASS] e(): tanpa tag mentah
+[PASS] csrf: token 64 hex — 6caabcddac76…
+[PASS] csrf: verify token benar
+[PASS] csrf: tolak token salah
+[PASS] csrf: tolak token kosong
+[PASS] csrf: tolak null
+[PASS] validator: login wajib isi
+[PASS] validator: username min 3
+[PASS] validator: username charset
+[PASS] validator: login valid
+[PASS] validator: password salah saat ini
+[PASS] validator: password baru min 8
+[PASS] validator: password harus ada angka
+[PASS] validator: konfirmasi harus sama
+[PASS] validator: password baru ≠ lama
+[PASS] validator: ganti password valid
+[PASS] db: koneksi PDO (emulasi prepare OFF)
+[PASS] db: time_zone koneksi = +07:00
+[PASS] db: tabel `roles` ada
+[PASS] db: tabel `users` ada
+[PASS] db: tabel `audit_logs` ada
+[PASS] db: tabel `login_attempts` ada
+[PASS] db: tabel `settings` ada
+[PASS] db: tabel `notifications` ada
+[PASS] db: tabel `schema_migrations` ada
+[PASS] db: semua migrasi diterapkan
+[PASS] seed: 4 role (admin/operator/driver/pimpinan) — jumlah=4
+[PASS] seed: akun admin ada
+[PASS] seed: admin role=admin
+[PASS] seed: admin force_password_change=1
+[PASS] seed: admin password memakai password_hash (bcrypt/argon2)
+[PASS] seed: password BUKAN plaintext (bukan tebakan umum)
+[PASS] seed: password_verify(TEST_ADMIN_PASSWORD) cocok
+[PASS] seed: hospital = RSUP dr. Soeradji Tirtonegoro Klaten — RSUP dr. Soeradji Tirtonegoro Klaten
+[PASS] seed: radius default = 100 m — 100
+[PASS] seed: foto struk BBM NON-blocking (0) — 0
+[PASS] seed: logo via setting (bukan hard-code)
+[PASS] settings: get logo_path
+[PASS] settings: getInt radius
+[PASS] settings: getBool struk non-blocking
+[PASS] audit: log tersimpan
+[PASS] audit: old_data/new_data JSON terisi
+[PASS] throttle: hitung kegagalan 15 menit — count=2
+[PASS] throttle: tidak bocor ke user lain
+[PASS] session: idle 30 menit → expired
+[PASS] session: absolute 720 menit → expired
+[PASS] session: checkTimeouts TIDAK memperpanjang idle — last_activity tidak berubah
+[PASS] session: markActivity (heartbeat) memperbarui last_activity
+[PASS] db: tolak identifier berbahaya
+[PASS] log: file log harian dibuat
+[PASS] struktur: public/index.php ada
+[PASS] struktur: docroot publik TIDAK memuat .env
+[PASS] struktur: tidak ada file >800 baris di app/ & modules/
+
+=== RINGKASAN: 60 PASS, 0 FAIL ===
+[PASS] unit suite exit=0
+
+--- [4/6] HTTP gate tests ---
+=== PHASE 1 HTTP TESTS (http://127.0.0.1:8085) ===
+[PASS] GET / redirect ke /login
+[PASS] GET /login 200 + form login
+[PASS] guest: /login tetap 200 utk guest
+[PASS] POST /login tanpa CSRF → 403 code=csrf_invalid
+[PASS] SQLi username → 422 validasi (tanpa error DB)
+[PASS] URL/script tidak dipantulkan mentah
+[PASS] login gagal → pesan generik (username/password salah)
+[PASS] 5x gagal → 429 rate-limited
+[PASS] login sukses → 302 ke /ganti-password (force pw)
+[PASS] GET /api/auth/me → 200 user admin
+[PASS] force_password_change=true
+[PASS] gate: /beranda → 403 force_password_change
+[PASS] gate: POST /api/auth/heartbeat → 200 (whitelisted)
+[PASS] role gate: /pengaturan → 403 (belum ganti password)
+[PASS] POST /ganti-password → 302 ke /beranda
+[PASS] force_password_change hilang → /beranda 200
+[PASS] admin: /pengaturan → 200
+[PASS] POST /pengaturan tanpa CSRF → 403
+[PASS] tanpa sesi: /api/auth/me → 401
+[PASS] logout menghancurkan sesi → 401
+[PASS] /.env tidak tersedia (404/403)
+[PASS] storage/logs tidak terjangkau publik
+[PASS] X-Content-Type-Options: nosniff
+[PASS] X-Frame-Options ada
+[PASS] 404 page: tanpa stack trace
+[PASS] 404 page: ada nomor 404
+[PASS] audit: LOGIN_SUCCESS tercatat (2)
+
+=== RINGKASAN HTTP: 27 PASS, 0 FAIL ===
+[PASS] HTTP suite exit=0
+
+--- [5/6] Security checks ---
+[PASS] .env tidak di-commit
+[PASS] .env ada di .gitignore
+[PASS] password DB sandbox tidak ada di file ter-track [bersih]
+[PASS] tanpa CDN eksternal (aset di-vendor) [bersih]
+[PASS] nama RS tidak hard-coded di kode aplikasi [bersih]
+[PASS] storage/.htaccess (deny) ada
+[PASS] storage/logs/.htaccess ada
+[PASS] storage/private/.htaccess ada
+[PASS] seeder memakai password_hash()
+[PASS] tanpa query konkatenasi $_GET/$_POST [bersih]
+[PASS] helper e() dipakai di view (count)
+[PASS] setiap view form punya _csrf (file form=4, file dgn csrf=5)
+[PASS] bootstrap.min.css lokal
+[PASS] bootstrap.bundle.min.js lokal
+[PASS] bootstrap-icons lokal + font
+[PASS] tanpa file ter-track >2MB [bersih]
+
+--- [6/6] Ringkasan akhir ---
+unit: 60 PASS, 0
+0 FAIL
+gate-level: 34 PASS, 0 FAIL
+STATUS GATE PHASE 1: ✅ PASS
+Hasil lengkap: tests/RESULTS-phase1-gate.txt
