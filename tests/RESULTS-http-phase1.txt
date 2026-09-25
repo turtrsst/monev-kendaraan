@@ -1,0 +1,27 @@
+[PASS] GET / redirect ke /login
+[PASS] GET /login 200 + form login
+[PASS] guest: /login tetap 200 utk guest
+[PASS] POST /login tanpa CSRF → 403 code=csrf_invalid
+[PASS] SQLi username → 422 validasi (tanpa error DB)
+[PASS] URL/script tidak dipantulkan mentah
+[PASS] login gagal → pesan generik (username/password salah)
+[PASS] 5x gagal → 429 rate-limited
+[PASS] login sukses → 302 ke /ganti-password (force pw)
+[PASS] GET /api/auth/me → 200 user admin
+[PASS] force_password_change=true
+[PASS] gate: /beranda → 403 force_password_change
+[PASS] gate: POST /api/auth/heartbeat → 200 (whitelisted)
+[PASS] role gate: /pengaturan → 403 (belum ganti password)
+[PASS] POST /ganti-password → 302 ke /beranda
+[PASS] force_password_change hilang → /beranda 200
+[PASS] admin: /pengaturan → 200
+[PASS] POST /pengaturan tanpa CSRF → 403
+[PASS] tanpa sesi: /api/auth/me → 401
+[PASS] logout menghancurkan sesi → 401
+[PASS] /.env tidak tersedia (404/403)
+[PASS] storage/logs tidak terjangkau publik
+[PASS] X-Content-Type-Options: nosniff
+[PASS] X-Frame-Options ada
+[PASS] 404 page: tanpa stack trace
+[PASS] 404 page: ada nomor 404
+[PASS] audit: LOGIN_SUCCESS tercatat (2)

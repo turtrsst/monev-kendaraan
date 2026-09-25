@@ -1,0 +1,46 @@
+# --- Konfigurasi & rahasia ---
+.env
+*.env.local
+.env.*
+!.env.example
+
+# --- Log ---
+storage/logs/*.log
+storage/logs/*.log.*
+
+# --- File privat (evidence, dokumen, preview watermark) ---
+storage/private/**
+!storage/private/**/
+!storage/private/**/.gitkeep
+!storage/private/**/.htaccess
+
+# --- File sementara (export, upload sementara) ---
+storage/temp/**
+!storage/temp/**/
+!storage/temp/**/.gitkeep
+!storage/temp/**/.htaccess
+
+# --- Cache runtime (rate-limit dsb.) ---
+storage/cache/**
+!storage/cache/**/
+!storage/cache/**/.htaccess
+
+# --- Uploads (jika ada fallback) ---
+public/uploads/
+
+# --- Dependencies & build ---
+/vendor/
+composer.lock.bak
+
+# --- OS / editor ---
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# --- Backup & arsip ---
+*.sql.gz
+*.sql.bak
+backups/
