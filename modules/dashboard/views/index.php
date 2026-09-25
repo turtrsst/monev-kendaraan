@@ -48,7 +48,7 @@ $user = $user ?? auth_user();
                     <div class="empty-state">
                         <i class="bi bi-inbox"></i>
                         <p class="mb-1 fw-semibold">Belum ada notifikasi</p>
-                        <p class="small text-muted mb-0">Assignment baru, revisi, dan pengingat akan muncul di sini.</p>
+                        <p class="small text-muted mb-0">Assignment baru, pengingat STNK/KIR/SIM akan muncul di sini.</p>
                     </div>
                 <?php else: ?>
                     <ul class="list-unstyled mb-0">
@@ -69,12 +69,12 @@ $user = $user ?? auth_user();
             <div class="card-body small">
                 <p class="text-muted mb-2">Aplikasi dibangun bertahap sesuai phase yang telah disetujui:</p>
                 <ul class="mb-0 phase-list">
-                    <li class="done"><i class="bi bi-check-circle-fill"></i> Phase 1 — Foundation (fase ini)</li>
-                    <li><i class="bi bi-circle"></i> Phase 2 — Master data</li>
-                    <li><i class="bi bi-circle"></i> Phase 3 — Assignment &amp; Trip</li>
-                    <li><i class="bi bi-circle"></i> Phase 4–5 — Driver mobile, GPS &amp; Evidence</li>
-                    <li><i class="bi bi-circle"></i> Phase 6–9 — Expense, OCR, Dokumen, Verifikasi</li>
-                    <li><i class="bi bi-circle"></i> Phase 10–12 — Dashboard, Laporan, Hardening</li>
+                    <li class="done"><i class="bi bi-check-circle-fill"></i> Phase 1 — Foundation (Kernel &amp; Auth)</li>
+                    <li class="done"><i class="bi bi-check-circle-fill"></i> Phase 2 — Master Data &amp; Penugasan (Selesai)</li>
+                    <li><i class="bi bi-circle"></i> Phase 3 — Trip Lifecycle &amp; State Machine (TODO)</li>
+                    <li><i class="bi bi-circle"></i> Phase 4–5 — Driver Mobile, GPS &amp; Evidence (TODO)</li>
+                    <li><i class="bi bi-circle"></i> Phase 6–9 — Expense, OCR, Dokumen, Verifikasi (TODO)</li>
+                    <li><i class="bi bi-circle"></i> Phase 10–12 — Dashboard, Laporan, Hardening (TODO)</li>
                 </ul>
             </div>
         </div>

@@ -164,3 +164,110 @@ INSERT INTO settings (skey, value, description) VALUES
     ('fuel.receipt_photo_required', '0', 'Foto struk BBM WAJIB (0 = non-blocking, sangat dianjurkan)'),
     ('fuel.receipt_missing_needs_review', '1', 'Tanpa foto struk → admin dapat menandai NEEDS_REVIEW')
 ON DUPLICATE KEY UPDATE value = VALUES(value), description = VALUES(description);
+
+-- ============================================================
+-- Migration 003 — Phase 2 Vehicles Master
+-- ============================================================
+CREATE TABLE IF NOT EXISTS vehicles (
+    id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    vehicle_code      VARCHAR(32)  NOT NULL,
+    plate_number      VARCHAR(20)  NOT NULL,
+    vehicle_name      VARCHAR(100) NOT NULL,
+    vehicle_type      VARCHAR(50)  NOT NULL DEFAULT 'OPERASIONAL',
+    ownership         VARCHAR(50)  NOT NULL DEFAULT 'DINAS',
+    year              SMALLINT UNSIGNED NULL,
+    stnk_expiry       DATE         NULL,
+    kir_expiry        DATE         NULL,
+    status            VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
+    current_odometer  INT UNSIGNED NOT NULL DEFAULT 0,
+    notes             TEXT         NULL,
+    created_at        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_vehicles_code (vehicle_code),
+    UNIQUE KEY uq_vehicles_plate (plate_number),
+    KEY idx_vehicles_status (status),
+    KEY idx_vehicles_type (vehicle_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- Migration 004 — Phase 2 Drivers Master
+-- ============================================================
+CREATE TABLE IF NOT EXISTS drivers (
+    id                 INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id            INT UNSIGNED NULL,
+    driver_code        VARCHAR(32)  NOT NULL,
+    name               VARCHAR(120) NOT NULL,
+    phone              VARCHAR(32)  NOT NULL,
+    license_type       VARCHAR(20)  NOT NULL DEFAULT 'SIM A',
+    license_number     VARCHAR(50)  NOT NULL,
+    license_expiry     DATE         NOT NULL,
+    status             VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
+    notes              TEXT         NULL,
+    created_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_drivers_code (driver_code),
+    UNIQUE KEY uq_drivers_user_id (user_id),
+    KEY idx_drivers_status (status),
+    KEY idx_drivers_license_expiry (license_expiry),
+    CONSTRAINT fk_drivers_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- Migration 005 — Phase 2 Ambulance Profile (1:1 with vehicles)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS ambulance_details (
+    vehicle_id        INT UNSIGNED NOT NULL,
+    ambulance_code    VARCHAR(32)  NOT NULL,
+    ambulance_name    VARCHAR(100) NOT NULL,
+    ambulance_type    VARCHAR(50)  NOT NULL DEFAULT 'TRANSPORT',
+    base_location     VARCHAR(100) NOT NULL DEFAULT 'Pool Ambulans RS',
+    readiness         VARCHAR(20)  NOT NULL DEFAULT 'READY',
+    chassis_number    VARCHAR(64)  NULL,
+    engine_number     VARCHAR(64)  NULL,
+    stnk_expiry       DATE         NULL,
+    kir_expiry        DATE         NULL,
+    insurance_expiry  DATE         NULL,
+    fuel_level        VARCHAR(20)  NOT NULL DEFAULT 'FULL',
+    equipment_notes   TEXT         NULL,
+    last_check_at     DATETIME     NULL,
+    notes             TEXT         NULL,
+    created_at        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (vehicle_id),
+    UNIQUE KEY uq_ambulance_code (ambulance_code),
+    KEY idx_ambulance_readiness (readiness),
+    CONSTRAINT fk_ambulance_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- Migration 006 — Phase 2 Assignment Management
+-- ============================================================
+CREATE TABLE IF NOT EXISTS assignments (
+    id                 INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    assignment_number  VARCHAR(32)  NOT NULL,
+    assignment_date    DATE         NOT NULL,
+    vehicle_id         INT UNSIGNED NOT NULL,
+    driver_id          INT UNSIGNED NOT NULL,
+    destination        VARCHAR(255) NOT NULL,
+    purpose            TEXT         NOT NULL,
+    passenger_count    SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+    passenger_notes    TEXT         NULL,
+    st_reference       VARCHAR(100) NULL,
+    sppd_reference     VARCHAR(100) NULL,
+    status             VARCHAR(20)  NOT NULL DEFAULT 'ASSIGNED',
+    notes              TEXT         NULL,
+    created_by         INT UNSIGNED NULL,
+    created_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_assignment_number (assignment_number),
+    KEY idx_assignments_date (assignment_date),
+    KEY idx_assignments_status (status),
+    KEY idx_assignments_vehicle (vehicle_id, assignment_date, status),
+    KEY idx_assignments_driver (driver_id, assignment_date, status),
+    CONSTRAINT fk_assignments_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_assignments_driver FOREIGN KEY (driver_id) REFERENCES drivers (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_assignments_creator FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -4,13 +4,26 @@ $user = $user ?? auth_user();
 $flashes = flashes();
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $isLogin = $path === '/login';
+$userRole = $user['role'] ?? '';
+
 $nav = [
     ['href' => '/beranda', 'label' => 'Beranda', 'icon' => 'bi-house-door'],
-    ['href' => '#', 'label' => 'Perjalanan', 'icon' => 'bi-route', 'disabled' => true, 'phase' => '3'],
-    ['href' => '#', 'label' => 'Monitoring', 'icon' => 'bi-broadcast-pin', 'disabled' => true, 'phase' => '10'],
-    ['href' => '#', 'label' => 'Laporan', 'icon' => 'bi-file-earmark-bar-graph', 'disabled' => true, 'phase' => '11'],
 ];
-if (($user['role'] ?? '') === 'admin') {
+
+if (in_array($userRole, ['admin', 'operator', 'pimpinan'], true)) {
+    $nav[] = ['href' => '/kendaraan', 'label' => 'Kendaraan', 'icon' => 'bi-car-front'];
+    $nav[] = ['href' => '/driver', 'label' => 'Driver', 'icon' => 'bi-person-badge'];
+    $nav[] = ['href' => '/ambulans', 'label' => 'Ambulans', 'icon' => 'bi-hospital'];
+}
+
+$nav[] = ['href' => '/penugasan', 'label' => 'Penugasan', 'icon' => 'bi-clipboard-check'];
+
+// Future phase placeholders (read-only markers)
+$nav[] = ['href' => '#', 'label' => 'Perjalanan', 'icon' => 'bi-route', 'disabled' => true, 'phase' => '3'];
+$nav[] = ['href' => '#', 'label' => 'Monitoring', 'icon' => 'bi-broadcast-pin', 'disabled' => true, 'phase' => '10'];
+$nav[] = ['href' => '#', 'label' => 'Laporan', 'icon' => 'bi-file-earmark-bar-graph', 'disabled' => true, 'phase' => '11'];
+
+if ($userRole === 'admin') {
     $nav[] = ['href' => '/pengaturan', 'label' => 'Pengaturan', 'icon' => 'bi-gear'];
 }
 ?>
@@ -59,7 +72,10 @@ if (($user['role'] ?? '') === 'admin') {
 </header>
 
 <div class="app-shell">
-    <nav class="sidenav d-none d-md-flex" aria-label="Menu utama">
+    <nav class="sidenav" aria-label="Navigasi utama">
+        <div class="sidenav-head">
+            <div class="fw-semibold small text-uppercase text-muted">Menu Utama</div>
+        </div>
         <?php foreach ($nav as $item): ?>
             <?php if (!empty($item['disabled'])): ?>
                 <span class="nav-item disabled" title="Modul Phase <?= e($item['phase']) ?> — menyusul">
@@ -74,7 +90,7 @@ if (($user['role'] ?? '') === 'admin') {
             <?php endif; ?>
         <?php endforeach; ?>
         <div class="sidenav-foot small text-muted">
-            Phase 1 · Foundation<br>Fleet Logbook v2
+            Phase 2 · Master &amp; Penugasan<br>Fleet Logbook v2
         </div>
     </nav>
 
@@ -90,14 +106,13 @@ if (($user['role'] ?? '') === 'admin') {
 </div>
 
 <nav class="bottomnav d-md-none" aria-label="Menu bawah">
-    <?php foreach (array_slice($nav, 0, 4) as $i => $item): ?>
-        <?php if (!empty($item['disabled'])): ?>
-            <span class="bottomnav-item disabled"><i class="bi <?= e($item['icon']) ?>"></i><small><?= e($item['label']) ?></small></span>
-        <?php else: ?>
-            <a class="bottomnav-item<?= str_starts_with($path, $item['href']) ? ' active' : '' ?>" href="<?= e($item['href']) ?>">
-                <i class="bi <?= e($item['icon']) ?>"></i><small><?= e($item['label']) ?></small>
-            </a>
-        <?php endif; ?>
+    <?php
+    $bottomItems = array_filter($nav, fn($it) => empty($it['disabled']));
+    foreach (array_slice(array_values($bottomItems), 0, 5) as $item):
+    ?>
+        <a class="bottomnav-item<?= str_starts_with($path, $item['href']) ? ' active' : '' ?>" href="<?= e($item['href']) ?>">
+            <i class="bi <?= e($item['icon']) ?>"></i><small><?= e($item['label']) ?></small>
+        </a>
     <?php endforeach; ?>
 </nav>
 

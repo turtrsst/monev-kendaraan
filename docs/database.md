@@ -198,3 +198,70 @@ DB::transaction(callable $fn): mixed
 - Evidence foto/GPS (phase berikutnya) disimpan di `storage/private/` —
   **tidak pernah di `public/`**.
 - Waktu selalu Asia/Jakarta; server adalah sumber kebenaran waktu.
+
+## Tabel Phase 2 — Master Data & Penugasan
+
+Empat tabel ditambahkan pada Phase 2 via migrasi `003` s/d `006`:
+
+### `vehicles` — master armada kendaraan dinas
+- `id`: INT UNSIGNED AUTO_INCREMENT PRIMARY KEY
+- `vehicle_code`: VARCHAR(32) UNIQUE
+- `plate_number`: VARCHAR(20) UNIQUE
+- `vehicle_name`: VARCHAR(100)
+- `vehicle_type`: VARCHAR(50) DEFAULT 'OPERASIONAL'
+- `ownership`: VARCHAR(50) DEFAULT 'DINAS'
+- `year`: SMALLINT UNSIGNED NULL
+- `stnk_expiry`: DATE NULL
+- `kir_expiry`: DATE NULL
+- `status`: VARCHAR(20) DEFAULT 'ACTIVE' (`ACTIVE`, `MAINTENANCE`, `INACTIVE`, `RETIRED`)
+- `current_odometer`: INT UNSIGNED DEFAULT 0
+- `notes`: TEXT NULL
+- `created_at`, `updated_at`: DATETIME
+
+### `drivers` — master data pengemudi resmi
+- `id`: INT UNSIGNED AUTO_INCREMENT PRIMARY KEY
+- `user_id`: INT UNSIGNED NULL UNIQUE (FK users.id ON DELETE SET NULL)
+- `driver_code`: VARCHAR(32) UNIQUE
+- `name`: VARCHAR(120)
+- `phone`: VARCHAR(32)
+- `license_type`: VARCHAR(20) DEFAULT 'SIM A'
+- `license_number`: VARCHAR(50)
+- `license_expiry`: DATE
+- `status`: VARCHAR(20) DEFAULT 'ACTIVE' (`ACTIVE`, `INACTIVE`, `SUSPENDED`)
+- `notes`: TEXT NULL
+- `created_at`, `updated_at`: DATETIME
+
+### `ambulance_details` — profil ambulans (relasi 1:1 melekat pada `vehicles`)
+- `vehicle_id`: INT UNSIGNED PRIMARY KEY (FK vehicles.id ON DELETE CASCADE)
+- `ambulance_code`: VARCHAR(32) UNIQUE
+- `ambulance_name`: VARCHAR(100)
+- `ambulance_type`: VARCHAR(50) DEFAULT 'TRANSPORT'
+- `base_location`: VARCHAR(100) DEFAULT 'Pool Ambulans RS'
+- `readiness`: VARCHAR(20) DEFAULT 'READY' (`READY`, `STANDBY`, `MAINTENANCE`, `UNAVAILABLE`)
+- `chassis_number`: VARCHAR(64) NULL
+- `engine_number`: VARCHAR(64) NULL
+- `stnk_expiry`: DATE NULL
+- `kir_expiry`: DATE NULL
+- `insurance_expiry`: DATE NULL
+- `fuel_level`: VARCHAR(20) DEFAULT 'FULL'
+- `equipment_notes`: TEXT NULL
+- `last_check_at`: DATETIME NULL
+- `notes`: TEXT NULL
+- `created_at`, `updated_at`: DATETIME
+
+### `assignments` — manajemen penugasan perjalanan resmi
+- `id`: INT UNSIGNED AUTO_INCREMENT PRIMARY KEY
+- `assignment_number`: VARCHAR(32) UNIQUE (format server: `ASG-YYYY-NNNNN`)
+- `assignment_date`: DATE
+- `vehicle_id`: INT UNSIGNED (FK vehicles.id ON DELETE RESTRICT)
+- `driver_id`: INT UNSIGNED (FK drivers.id ON DELETE RESTRICT)
+- `destination`: VARCHAR(255)
+- `purpose`: TEXT
+- `passenger_count`: SMALLINT UNSIGNED DEFAULT 1
+- `passenger_notes`: TEXT NULL
+- `st_reference`: VARCHAR(100) NULL (No. Surat Tugas)
+- `sppd_reference`: VARCHAR(100) NULL (No. SPPD)
+- `status`: VARCHAR(20) DEFAULT 'ASSIGNED' (`DRAFT`, `ASSIGNED`, `CANCELLED`)
+- `notes`: TEXT NULL
+- `created_by`: INT UNSIGNED NULL (FK users.id ON DELETE SET NULL)
+- `created_at`, `updated_at`: DATETIME

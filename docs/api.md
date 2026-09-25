@@ -340,3 +340,54 @@ Error:
   baru bisa didokumentasikan bersama endpointnya di Phase 2+.
 - **Audit** — login (sukses/gagal/throttled/inactive/locked), logout, ganti password,
   dan perubahan settings tercatat di `audit_logs` (server-side, IP + user-agent).
+
+## Endpoint Phase 2 — Master Data & Penugasan
+
+### Ringkasan Endpoint Phase 2
+
+| Method | Path | Auth | Role | CSRF | Deskripsi |
+|---|---|---|---|---|---|
+| GET | `/kendaraan` | Yes | admin, operator, pimpinan | — | UI Master Kendaraan (Pagination & Filter) |
+| GET | `/kendaraan/tambah` | Yes | admin, operator | — | UI Formulir Tambah Kendaraan |
+| POST | `/kendaraan/tambah` | Yes | admin, operator | Required | Simpan Kendaraan Baru |
+| GET | `/kendaraan/edit/{id}` | Yes | admin, operator | — | UI Formulir Edit Kendaraan |
+| POST | `/kendaraan/edit/{id}` | Yes | admin, operator | Required | Update Kendaraan |
+| POST | `/kendaraan/hapus/{id}` | Yes | admin | Required | Hapus Kendaraan |
+| GET | `/driver` | Yes | admin, operator, pimpinan | — | UI Master Driver |
+| GET | `/driver/tambah` | Yes | admin, operator | — | UI Formulir Tambah Driver |
+| POST | `/driver/tambah` | Yes | admin, operator | Required | Simpan Driver Baru |
+| GET | `/driver/edit/{id}` | Yes | admin, operator | — | UI Formulir Edit Driver |
+| POST | `/driver/edit/{id}` | Yes | admin, operator | Required | Update Driver |
+| POST | `/driver/hapus/{id}` | Yes | admin | Required | Hapus Driver |
+| GET | `/ambulans` | Yes | admin, operator, pimpinan | — | UI Profil Ambulans |
+| GET | `/ambulans/tambah` | Yes | admin, operator | — | UI Tambah Profil Ambulans |
+| POST | `/ambulans/tambah` | Yes | admin, operator | Required | Simpan Profil Ambulans (Relasi 1:1) |
+| GET | `/ambulans/edit/{id}` | Yes | admin, operator | — | UI Edit Profil Ambulans |
+| POST | `/ambulans/edit/{id}` | Yes | admin, operator | Required | Update Profil Ambulans |
+| POST | `/ambulans/hapus/{id}` | Yes | admin | Required | Hapus Profil Ambulans |
+| GET | `/penugasan` | Yes | any | — | UI Daftar Penugasan (Driver difilter otomatis) |
+| GET | `/penugasan/tambah` | Yes | admin, operator | — | UI Formulir Buat Penugasan |
+| POST | `/penugasan/tambah` | Yes | admin, operator | Required | Terbitkan Penugasan (Protected Concurrency) |
+| GET | `/penugasan/edit/{id}` | Yes | admin, operator | — | UI Edit Penugasan |
+| POST | `/penugasan/edit/{id}` | Yes | admin, operator | Required | Update Penugasan |
+| POST | `/penugasan/batal/{id}` | Yes | admin, operator | Required | Batalkan Penugasan |
+| GET | `/api/vehicles` | Yes | any | — | API JSON Daftar Kendaraan |
+| GET | `/api/vehicles/{id}` | Yes | any | — | API JSON Detail Kendaraan |
+| POST | `/api/vehicles` | Yes | admin, operator | Required | API Simpan Kendaraan |
+| PUT | `/api/vehicles/{id}` | Yes | admin, operator | Required | API Update Kendaraan |
+| DELETE | `/api/vehicles/{id}` | Yes | admin | Required | API Hapus Kendaraan |
+| GET | `/api/drivers` | Yes | any | — | API JSON Daftar Driver |
+| GET | `/api/drivers/{id}` | Yes | any | — | API JSON Detail Driver |
+| POST | `/api/drivers` | Yes | admin, operator | Required | API Simpan Driver |
+| PUT | `/api/drivers/{id}` | Yes | admin, operator | Required | API Update Driver |
+| DELETE | `/api/drivers/{id}` | Yes | admin | Required | API Hapus Driver |
+| GET | `/api/ambulances` | Yes | any | — | API JSON Daftar Profil Ambulans |
+| GET | `/api/ambulances/{id}` | Yes | any | — | API JSON Detail Profil Ambulans |
+| POST | `/api/ambulances` | Yes | admin, operator | Required | API Simpan Profil Ambulans |
+| PUT | `/api/ambulances/{id}` | Yes | admin, operator | Required | API Update Profil Ambulans |
+| DELETE | `/api/ambulances/{id}` | Yes | admin | Required | API Hapus Profil Ambulans |
+| GET | `/api/assignments` | Yes | any | — | API JSON Daftar Penugasan |
+| GET | `/api/assignments/{id}` | Yes | any | — | API JSON Detail Penugasan (IDOR protected) |
+| POST | `/api/assignments` | Yes | admin, operator | Required | API Buat Penugasan Baru |
+| PUT | `/api/assignments/{id}` | Yes | admin, operator | Required | API Update Penugasan |
+| POST | `/api/assignments/{id}/cancel` | Yes | admin, operator | Required | API Pembatalan Penugasan |
