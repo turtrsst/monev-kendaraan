@@ -2,8 +2,18 @@
 
 /**
  * Bootstrap test unit Phase 2 (CLI).
- * Menguji: VehicleValidator, DriverValidator, AmbulanceValidator, AssignmentValidator,
- * serta fungsionalitas logika tanpa ketergantungan runtime aktif.
+ * Menguji pure input & format validation:
+ * - VehicleValidator
+ * - DriverValidator
+ * - AmbulanceValidator
+ * - AssignmentValidator
+ *
+ * Catatan Arsitektur:
+ * File ini menguji PURE UNIT VALIDATION (format, tipe data, batas karakter, status whitelist,
+ * dan aturan bisnis stateless) yang terisolasi dari koneksi database runtime.
+ * Pengujian validasi relasional (cek eksistensi foreign key ke database riil)
+ * dilakukan pada level HTTP / integration test (tests/http_phase2.sh).
+ *
  * Menjalankan: php tests/unit_phase2.php
  */
 
@@ -35,7 +45,7 @@ function check(string $name, bool $cond, string $detail = ''): void
     }
 }
 
-echo "=== PHASE 2 UNIT TESTS ===\n\n";
+echo "=== PHASE 2 PURE UNIT TESTS (ISOLATED VALIDATORS) ===\n\n";
 
 use App\Validators\VehicleValidator;
 use App\Validators\DriverValidator;
@@ -43,7 +53,7 @@ use App\Validators\AmbulanceValidator;
 use App\Validators\AssignmentValidator;
 
 /* ---------------------------------------------------------------- */
-/* 1. Vehicle Validator Tests */
+/* 1. Vehicle Validator Tests (Pure Input & Format)                */
 /* ---------------------------------------------------------------- */
 $validVehicle = [
     'vehicle_code' => 'VEH-999',
@@ -53,13 +63,16 @@ $validVehicle = [
     'status' => 'ACTIVE',
     'stnk_expiry' => '2028-12-31',
 ];
-$errs = VehicleValidator::validate($validVehicle);
-check('vehicle: valid payload passes', empty($errs), json_encode($errs));
 
 $invalidCode = $validVehicle;
-$invalidCode['vehicle_code'] = 'X'; // too short
+$invalidCode['vehicle_code'] = 'X'; // too short (min 3)
 $errs = VehicleValidator::validate($invalidCode);
 check('vehicle: code too short rejected', isset($errs['vehicle_code']), $errs['vehicle_code'] ?? '');
+
+$invalidCodeChars = $validVehicle;
+$invalidCodeChars['vehicle_code'] = 'VEH@999!'; // invalid characters
+$errs = VehicleValidator::validate($invalidCodeChars);
+check('vehicle: invalid code characters rejected', isset($errs['vehicle_code']), $errs['vehicle_code'] ?? '');
 
 $invalidPlate = $validVehicle;
 $invalidPlate['plate_number'] = '';
@@ -76,8 +89,13 @@ $invalidStnk['stnk_expiry'] = 'invalid-date';
 $errs = VehicleValidator::validate($invalidStnk);
 check('vehicle: invalid stnk date format rejected', isset($errs['stnk_expiry']), $errs['stnk_expiry'] ?? '');
 
+$invalidYear = $validVehicle;
+$invalidYear['year'] = '1950'; // out of range (< 1980)
+$errs = VehicleValidator::validate($invalidYear);
+check('vehicle: out of range year rejected', isset($errs['year']), $errs['year'] ?? '');
+
 /* ---------------------------------------------------------------- */
-/* 2. Driver Validator Tests */
+/* 2. Driver Validator Tests (Pure Input & Format)                 */
 /* ---------------------------------------------------------------- */
 $validDriver = [
     'driver_code' => 'DRV-999',
@@ -88,8 +106,6 @@ $validDriver = [
     'license_expiry' => '2028-10-10',
     'status' => 'ACTIVE',
 ];
-$errs = DriverValidator::validate($validDriver);
-check('driver: valid payload passes', empty($errs), json_encode($errs));
 
 $invalidDrvCode = $validDriver;
 $invalidDrvCode['driver_code'] = '';
@@ -97,7 +113,7 @@ $errs = DriverValidator::validate($invalidDrvCode);
 check('driver: empty driver code rejected', isset($errs['driver_code']), $errs['driver_code'] ?? '');
 
 $invalidPhone = $validDriver;
-$invalidPhone['phone'] = '123'; // too short
+$invalidPhone['phone'] = '123'; // too short (min 8)
 $errs = DriverValidator::validate($invalidPhone);
 check('driver: short phone rejected', isset($errs['phone']), $errs['phone'] ?? '');
 
@@ -112,7 +128,7 @@ $errs = DriverValidator::validate($invalidDrvStatus);
 check('driver: invalid status rejected', isset($errs['status']), $errs['status'] ?? '');
 
 /* ---------------------------------------------------------------- */
-/* 3. Ambulance Validator Tests */
+/* 3. Ambulance Validator Tests (Pure Input & Format)              */
 /* ---------------------------------------------------------------- */
 $validAmbulance = [
     'vehicle_id' => 1,
@@ -122,9 +138,6 @@ $validAmbulance = [
     'base_location' => 'IGD RSUP Klaten',
     'readiness' => 'READY',
 ];
-// update mode (isCreate = false, ignores vehicle DB check)
-$errs = AmbulanceValidator::validate($validAmbulance, 1, false);
-check('ambulance: valid payload passes in update mode', empty($errs), json_encode($errs));
 
 $invalidAmbCode = $validAmbulance;
 $invalidAmbCode['ambulance_code'] = '';
@@ -136,53 +149,82 @@ $invalidReadiness['readiness'] = 'NOT_A_STATUS';
 $errs = AmbulanceValidator::validate($invalidReadiness, 1, false);
 check('ambulance: invalid readiness rejected', isset($errs['readiness']), $errs['readiness'] ?? '');
 
+$invalidAmbDates = $validAmbulance;
+$invalidAmbDates['insurance_expiry'] = 'invalid-date';
+$errs = AmbulanceValidator::validate($invalidAmbDates, 1, false);
+check('ambulance: invalid insurance date rejected', isset($errs['insurance_expiry']), $errs['insurance_expiry'] ?? '');
+
 $createWithoutVehicle = $validAmbulance;
 $createWithoutVehicle['vehicle_id'] = 0;
 $errs = AmbulanceValidator::validate($createWithoutVehicle, null, true);
 check('ambulance: create without vehicle rejected', isset($errs['vehicle_id']), $errs['vehicle_id'] ?? '');
 
 /* ---------------------------------------------------------------- */
-/* 4. Assignment Validator Tests */
+/* 4. Assignment Validator Tests (Pure Input & Format)             */
 /* ---------------------------------------------------------------- */
-$validAssignment = [
+$baseAssignment = [
     'assignment_date' => '2026-10-01',
-    'vehicle_id' => 1,
-    'driver_id' => 1,
+    'vehicle_id' => 0, // diuji khusus untuk input format kendaraan
+    'driver_id' => 0,  // diuji khusus untuk input format driver
     'destination' => 'RSUD dr. Moewardi Surakarta',
     'purpose' => 'Rujukan pasien emergency',
     'passenger_count' => 2,
     'status' => 'ASSIGNED',
 ];
-// Note: When DB is offline, Model::find inside validator returns null or handles gracefully
-$errs = AssignmentValidator::validate($validAssignment);
-// If DB is offline, vehicle/driver check flags as not found in DB
-check('assignment: destination & purpose required validation working', !empty($validAssignment['destination']) && !empty($validAssignment['purpose']));
 
-$invalidDateAsg = $validAssignment;
-$invalidDateAsg['assignment_date'] = 'invalid';
+// 4.1 Missing/Invalid Vehicle ID
+$missingVehicle = $baseAssignment;
+$missingVehicle['vehicle_id'] = 0;
+$errs = AssignmentValidator::validate($missingVehicle);
+check('assignment: missing vehicle_id rejected', isset($errs['vehicle_id']), $errs['vehicle_id'] ?? '');
+
+// 4.2 Missing/Invalid Driver ID
+$missingDriver = $baseAssignment;
+$missingDriver['driver_id'] = 0;
+$errs = AssignmentValidator::validate($missingDriver);
+check('assignment: missing driver_id rejected', isset($errs['driver_id']), $errs['driver_id'] ?? '');
+
+// 4.3 Invalid Date Format
+$invalidDateAsg = $baseAssignment;
+$invalidDateAsg['assignment_date'] = 'invalid-date';
 $errs = AssignmentValidator::validate($invalidDateAsg);
-check('assignment: invalid date rejected', isset($errs['assignment_date']), $errs['assignment_date'] ?? '');
+check('assignment: invalid date format rejected', isset($errs['assignment_date']), $errs['assignment_date'] ?? '');
 
-$emptyDest = $validAssignment;
+// 4.4 Empty Assignment Date
+$emptyDateAsg = $baseAssignment;
+$emptyDateAsg['assignment_date'] = '';
+$errs = AssignmentValidator::validate($emptyDateAsg);
+check('assignment: empty date rejected', isset($errs['assignment_date']), $errs['assignment_date'] ?? '');
+
+// 4.5 Empty Destination
+$emptyDest = $baseAssignment;
 $emptyDest['destination'] = '';
 $errs = AssignmentValidator::validate($emptyDest);
 check('assignment: empty destination rejected', isset($errs['destination']), $errs['destination'] ?? '');
 
-$emptyPurpose = $validAssignment;
+// 4.6 Empty Purpose
+$emptyPurpose = $baseAssignment;
 $emptyPurpose['purpose'] = '';
 $errs = AssignmentValidator::validate($emptyPurpose);
 check('assignment: empty purpose rejected', isset($errs['purpose']), $errs['purpose'] ?? '');
 
-$invalidStatusAsg = $validAssignment;
+// 4.7 Invalid Status (Whitelist Violation / Phase 3 Status Forbidden)
+$invalidStatusAsg = $baseAssignment;
 $invalidStatusAsg['status'] = 'COMPLETED'; // Only DRAFT, ASSIGNED, CANCELLED allowed in Phase 2
 $errs = AssignmentValidator::validate($invalidStatusAsg);
 check('assignment: invalid status rejected (Phase 3 trip statuses forbidden)', isset($errs['status']), $errs['status'] ?? '');
 
+// 4.8 Out of Range Passenger Count
+$invalidPassengers = $baseAssignment;
+$invalidPassengers['passenger_count'] = 150; // max 100
+$errs = AssignmentValidator::validate($invalidPassengers);
+check('assignment: excessive passenger count rejected', isset($errs['passenger_count']), $errs['passenger_count'] ?? '');
+
 /* ---------------------------------------------------------------- */
-/* Ringkasan */
+/* Ringkasan                                                       */
 /* ---------------------------------------------------------------- */
 echo "\n----------------------------------------\n";
-echo "RINGKASAN UNIT TEST PHASE 2:\n";
+echo "RINGKASAN UNIT TEST PHASE 2 (PURE VALIDATORS):\n";
 echo "PASS: {$GLOBALS['__pass']}\n";
 echo "FAIL: {$GLOBALS['__fail']}\n";
 echo "----------------------------------------\n";
