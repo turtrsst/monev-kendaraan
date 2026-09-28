@@ -18,8 +18,10 @@ if (in_array($userRole, ['admin', 'operator', 'pimpinan'], true)) {
 
 $nav[] = ['href' => '/penugasan', 'label' => 'Penugasan', 'icon' => 'bi-clipboard-check'];
 
+// Phase 3 driver logbook workflow
+$nav[] = ['href' => '/perjalanan', 'label' => 'Perjalanan', 'icon' => 'bi-route'];
+
 // Future phase placeholders (read-only markers)
-$nav[] = ['href' => '#', 'label' => 'Perjalanan', 'icon' => 'bi-route', 'disabled' => true, 'phase' => '3'];
 $nav[] = ['href' => '#', 'label' => 'Monitoring', 'icon' => 'bi-broadcast-pin', 'disabled' => true, 'phase' => '10'];
 $nav[] = ['href' => '#', 'label' => 'Laporan', 'icon' => 'bi-file-earmark-bar-graph', 'disabled' => true, 'phase' => '11'];
 
@@ -90,7 +92,7 @@ if ($userRole === 'admin') {
             <?php endif; ?>
         <?php endforeach; ?>
         <div class="sidenav-foot small text-muted">
-            Phase 2 · Master &amp; Penugasan<br>Fleet Logbook v2
+            Phase 3 · Trip &amp; Logbook<br>Fleet Logbook v2
         </div>
     </nav>
 
