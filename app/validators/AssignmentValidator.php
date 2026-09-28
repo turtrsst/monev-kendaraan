@@ -63,6 +63,26 @@ final class AssignmentValidator
             $errors['destination'] = 'Tujuan perjalanan harus 3–255 karakter.';
         }
 
+        // Optional authoritative destination coordinates: both values must be supplied together.
+        $latRaw = $data['destination_latitude'] ?? null;
+        $lonRaw = $data['destination_longitude'] ?? null;
+        $latScalar = $latRaw === null || is_scalar($latRaw);
+        $lonScalar = $lonRaw === null || is_scalar($lonRaw);
+        $hasLat = $latScalar && $latRaw !== null && trim((string)$latRaw) !== '';
+        $hasLon = $lonScalar && $lonRaw !== null && trim((string)$lonRaw) !== '';
+        if (!$latScalar || !$lonScalar) {
+            $errors['destination_coordinates'] = 'Koordinat tujuan tidak valid.';
+        } elseif ($hasLat !== $hasLon) {
+            $errors['destination_coordinates'] = 'Latitude dan longitude tujuan harus diisi bersama.';
+        } elseif ($hasLat) {
+            if (!is_numeric($latRaw) || !is_numeric($lonRaw)
+                || !is_finite((float)$latRaw) || !is_finite((float)$lonRaw)
+                || (float)$latRaw < -90 || (float)$latRaw > 90
+                || (float)$lonRaw < -180 || (float)$lonRaw > 180) {
+                $errors['destination_coordinates'] = 'Koordinat tujuan tidak valid (latitude -90..90, longitude -180..180).';
+            }
+        }
+
         // purpose
         $purpose = trim((string)($data['purpose'] ?? ''));
         if ($purpose === '') {

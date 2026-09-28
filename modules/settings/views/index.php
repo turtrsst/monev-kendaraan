@@ -46,7 +46,29 @@ $cur = static fn (string $k, string $d = ''): string => (string)($current[$k]['v
                 <?php if (isset($errors['trip.destination_radius_default_m'])): ?>
                     <div class="invalid-feedback"><?= e($errors['trip.destination_radius_default_m']) ?></div>
                 <?php endif; ?>
-                <div class="form-text">≤radius=VALID · ±toleransi=WARNING · di luar=REVIEW_REQUIRED.</div>
+                <div class="form-text">Ambang jarak ARRIVAL. Tanpa koordinat tujuan, jarak tidak diverifikasi.</div>
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label" for="trip.destination_tolerance_m">Toleransi jarak (meter)</label>
+                <input type="number" min="0" max="10000"
+                       class="form-control <?= isset($errors['trip.destination_tolerance_m']) ? 'is-invalid' : '' ?>"
+                       id="trip.destination_tolerance_m" name="trip.destination_tolerance_m"
+                       value="<?= e($errors['trip.destination_tolerance_m'] ?? $cur('trip.destination_tolerance_m', '50')) ?>">
+                <?php if (isset($errors['trip.destination_tolerance_m'])): ?>
+                    <div class="invalid-feedback"><?= e($errors['trip.destination_tolerance_m']) ?></div>
+                <?php endif; ?>
+                <div class="form-text">Sedikit di luar radius + toleransi menjadi REVIEW_REQUIRED.</div>
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label" for="trip.gps_max_accuracy_m">Akurasi GPS maksimum (meter)</label>
+                <input type="number" min="1" max="5000"
+                       class="form-control <?= isset($errors['trip.gps_max_accuracy_m']) ? 'is-invalid' : '' ?>"
+                       id="trip.gps_max_accuracy_m" name="trip.gps_max_accuracy_m"
+                       value="<?= e($errors['trip.gps_max_accuracy_m'] ?? $cur('trip.gps_max_accuracy_m', '100')) ?>">
+                <?php if (isset($errors['trip.gps_max_accuracy_m'])): ?>
+                    <div class="invalid-feedback"><?= e($errors['trip.gps_max_accuracy_m']) ?></div>
+                <?php endif; ?>
+                <div class="form-text">Di atas ambang: WARNING; di atas 3×: REVIEW_REQUIRED.</div>
             </div>
             <div class="col-12 col-md-4 d-flex align-items-end">
                 <div class="form-check form-switch">

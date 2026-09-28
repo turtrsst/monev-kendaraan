@@ -1,8 +1,7 @@
 # Database — `kendaraan_logbook`
 
-> Dokumen ini **mencerminkan implementasi Phase 1 yang aktual** (audit terhadap
-> `database/migrations/`, `database/schema.sql`, `database/migrate.php`,
-> `app/core/DB.php`, dan `app/models/`).
+> Bagian foundation di bawah mencatat detail Phase 1; bagian Phase 2/3 ditambahkan
+> untuk mencerminkan skema aktual sampai migrasi `007_phase3_trips.sql`.
 > Target: MySQL 8 / MariaDB 10.4+ (sandbox dibangun: MariaDB 11.4). Engine **InnoDB**,
 > charset `utf8mb4`, collation `utf8mb4_unicode_ci`.
 > **DB lama `kendaraan_app` / `Z:\sias\kendaraan-app` TIDAK digunakan/diubah.**
@@ -55,9 +54,8 @@ file migrasi): kolom `filename VARCHAR(191)` **PRIMARY KEY** + `applied_at DATET
    (`ON DUPLICATE KEY UPDATE`).
 5. `--fresh` men-drop semua tabel (termasuk `schema_migrations`) dan mengulang dari nol.
 
-**Snapshot:** `database/schema.sql` = gabungan 001 + 002 (terverifikasi identik dengan
-file migrasi) untuk import cepat — **tetapi jalankan `database/migrate.php`** agar
-tercatat & idempotent.
+**Snapshot:** `database/schema.sql` merangkum migrasi 001–007 untuk import cepat;
+untuk instalasi/upgrade normal gunakan `database/migrate.php` agar tiap migrasi tercatat.
 
 **Seed dalam migrasi (`002_seed_foundation.sql`):** 4 role
 (`admin`/`operator`/`driver`/`pimpinan`, permissions JSON) + settings default
@@ -65,8 +63,9 @@ tercatat & idempotent.
 dst.). Idempoten lewat `ON DUPLICATE KEY UPDATE`. **Akun admin TIDAK di-seed di sini**
 (hash tidak pernah masuk Git) — bagian dari `database/seeds/seed_admin.php`.
 
-Tabel Phase 2+ (trips, vehicles, assignments, laporan, …) menyusul di migrasi lanjutan.
-Pola Phase 1 yang berlaku: **tanpa ENUM** (role berasal dari tabel `roles` yang
+Tabel kendaraan dan penugasan dijelaskan pada bagian Phase 2; tabel trip dan event log
+pada bagian Phase 3. Laporan dan domain Phase 4+ masih menyusul. Pola yang berlaku:
+**tanpa ENUM** (role berasal dari tabel `roles` yang
 configurable) dan **foreign key eksplisit** bila relasi antar tabel dibutuhkan
 (Phase 1 sudah memakai FK — lihat §Foreign Keys).
 
@@ -186,17 +185,17 @@ DB::transaction(callable $fn): mixed
   mengeksekusi callback, `commit()`; jika callback melempar exception → `rollBack()`
   otomatis (selama masih dalam transaksi) lalu exception diteruskan; nilai kembalian
   callback dikembalikan ke pemanggil.
-- **Phase 1: belum ada pemanggilan `DB::transaction()`** — seluruh operasi foundation
-  (login attempt, update password, audit, settings) bersifat per-statement tunggal.
-  Helper sudah tersedia dan wajib dipakai untuk operasi multi-tabel di phase berikutnya.
+- Foundation Phase 1 operations are mostly single-statement. Phase 2 assignment creation
+  and Phase 3 trip creation/transitions use database transactions and row locks for
+  multi-table integrity; see `PHASE-2-DATA-DESIGN.md` and `PHASE-3-TRIP-EXECUTION.md`.
 
 ## Aturan keamanan data
 
 - Kredensial DB hanya di `.env` (tidak di-commit; `.env.example` tanpa rahasia).
 - Semua query lewat **prepared statement**; identifier tabel/kolom divalidasi
   `DB::assertIdentifier()` (bukan `DB::identifier()`).
-- Evidence foto/GPS (phase berikutnya) disimpan di `storage/private/` —
-  **tidak pernah di `public/`**.
+- Phase 3 GPS coordinates are stored only on explicit trip events in `trip_events`; no
+  photos, uploads, or continuous GPS tracking are part of this migration.
 - Waktu selalu Asia/Jakarta; server adalah sumber kebenaran waktu.
 
 ## Tabel Phase 2 — Master Data & Penugasan
@@ -265,3 +264,42 @@ Empat tabel ditambahkan pada Phase 2 via migrasi `003` s/d `006`:
 - `notes`: TEXT NULL
 - `created_by`: INT UNSIGNED NULL (FK users.id ON DELETE SET NULL)
 - `created_at`, `updated_at`: DATETIME
+
+## Tabel Phase 3 — Trip & Digital Logbook
+
+Migrasi `007_phase3_trips.sql` menambah nullable destination coordinates pada assignments
+serta membuat trip sequence, trip master, dan event history. Nilai tujuan manual bersumber
+dari input assignment staff; tidak ada geocoder atau koordinat default.
+
+### `trip_number_sequences`
+
+- `trip_year` SMALLINT UNSIGNED PRIMARY KEY; `last_value` INT UNSIGNED.
+- Dipakai di transaksi dengan row lock untuk membuat nomor `TRP-YYYY-NNNNN` tanpa race.
+
+### `trip`
+
+- `id` BIGINT UNSIGNED primary key; `trip_number` unik; `create_uuid` unik.
+- `assignment_id` INT UNSIGNED unique/FK RESTRICT: satu trip per assignment.
+- `vehicle_id`, `driver_id` snapshot/FK RESTRICT; tidak ada lifecycle API untuk menggantinya.
+- `destination_latitude`/`destination_longitude` DECIMAL(10,7) nullable snapshot; pasangan/range diperiksa.
+- `status` constrained ke ASSIGNED, READY, STARTED, ARRIVED, RETURNING, COMPLETED, SUBMITTED.
+- Planned departure, server actual timestamps, notes, creator, created/updated timestamps.
+- Indexes: assignment unique, driver/status/date, vehicle/status, status/date.
+
+### `trip_events`
+
+- Event history: READY, START, ARRIVAL, RETURNING, COMPLETED, SUBMITTED.
+- `event_uuid` unique idempotency key; `trip_id` FK cascade; actor FK set null.
+- Server `occurred_at`/`recorded_at`; optional coordinates, accuracy, computed arrival distance,
+  classification, notes, and minimal JSON metadata. No submitted client time is authoritative.
+- Indexes by trip/time, trip/type, and actor/time.
+
+### Assignment coordinate additions
+
+`assignments.destination_latitude` and `destination_longitude` are both nullable. Validation
+requires either both empty or both numeric and within latitude [-90, 90] and longitude
+[-180, 180]. A trip snapshots their value at creation. When absent, GPS distance is not
+computed and the application explicitly reports that destination validation is unavailable.
+
+MySQL/MariaDB constraints are declared in migration `007`; apply to the configured
+`kendaraan_logbook` database with `php database/migrate.php --status` then `php database/migrate.php`.

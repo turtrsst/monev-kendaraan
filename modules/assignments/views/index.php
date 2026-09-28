@@ -11,6 +11,13 @@ $statusBadges = [
     'CANCELLED' => 'danger',
 ];
 $canManage = in_array($userRole, ['admin', 'operator'], true);
+$newActionUuid = static function (): string {
+    $bytes = random_bytes(16);
+    $bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x40);
+    $bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
+    $hex = bin2hex($bytes);
+    return substr($hex, 0, 8) . '-' . substr($hex, 8, 4) . '-' . substr($hex, 12, 4) . '-' . substr($hex, 16, 4) . '-' . substr($hex, 20);
+};
 ?>
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <div>
@@ -127,6 +134,15 @@ $canManage = in_array($userRole, ['admin', 'operator'], true);
                                                 <?php endif; ?>
                                             </ul>
                                         </div>
+                                        <?php if ($a['status'] === 'ASSIGNED'): ?>
+                                            <form method="post" action="/perjalanan/buat/<?= (int)$a['id'] ?>" class="mt-2">
+                                                <?= csrf_field() ?>
+                                                <input type="hidden" name="action_uuid" value="<?= e($newActionUuid()) ?>">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary w-100">
+                                                    <i class="bi bi-signpost-2 me-1"></i>Buat Trip
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
                                     </td>
                                 <?php endif; ?>
                             </tr>

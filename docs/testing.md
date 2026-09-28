@@ -46,3 +46,31 @@ Tahapan gate:
 - Gate per fase: **PASS/FAIL + daftar file + migrasi + cek keamanan** → berhenti menunggu approval.
 - Test assertion ditulis sekali di `tests/`, bukan manual spreadsheet.
 - Waktu selalu Asia/Jakarta; kegagalan dievaluasi dari `storage/logs/app-YYYY-MM-DD.log`.
+
+---
+
+## Phase 3 — Trip lifecycle
+
+Commands in a PHP 8.2 + pdo_mysql environment:
+
+```bash
+php tests/unit_phase3.php
+# Run full database integration only against an isolated migrated kendaraan_logbook:
+PHASE3_RUN_INTEGRATION=1 PHASE3_TEST_DB_OK=1 tests/run_phase3_gate.sh
+# Authenticated CSRF test (separate running app/test account):
+BASE_URL=http://127.0.0.1:8085 TEST_AUTH_USERNAME=test-admin TEST_AUTH_PASSWORD='...' tests/http_phase3.sh
+```
+
+The integration suite creates unique temporary users, drivers, vehicles, assignments, and
+trips in `kendaraan_logbook`, then removes its fixtures. It covers valid/invalid assignment
+creation, active vehicle/driver checks, duplicate assignment, valid/invalid/terminal states,
+IDOR, one-time GPS classification, event idempotency, audit persistence, and parallel
+START actions through independent PHP processes. Do not point it at operational records.
+
+The static gate also checks CSRF route declarations, row locking, unique event UUIDs,
+one-shot Geolocation capture, and Phase 4 scope boundaries. It does not replace PHP lint,
+unit, HTTP, database integration, or Phase 2 regression tests. Current sandbox verification:
+static Phase 3 checks **25 PASS / 0 FAIL** and the refreshed Phase 2 gate has **31 PASS / 0 FAIL**; PHP CLI is absent and MySQL/MariaDB runtime is
+absent, so PHP syntax, the 23 unit assertions, Phase 3 DB integration, HTTP CSRF tests, and
+Phase 2 runtime regression remain **NOT RUNNABLE** here. Phase 2 runtime gate status remains
+**PENDING**, not PASS.

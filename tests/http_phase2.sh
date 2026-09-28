@@ -59,12 +59,12 @@ chk "Guest GET /api/assignments returns 401 unauthenticated" "$([ "$code" = "401
 code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H "Content-Type: application/json" -d '{"vehicle_code":"TEST"}' "$BASE/api/vehicles")
 chk "POST /api/vehicles without CSRF/auth rejected" "$([ "$code" = "401" ] || [ "$code" = "419" ] && echo 1 || echo 0)"
 
-# 3. No Phase 3 routes leakage check (404 expected)
+# 3. Phase 3 routes are now present; verify the Phase 2-era guest protections remain intact.
 code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/api/trips")
-chk "Phase 3 route /api/trips does NOT exist (404 expected)" "$([ "$code" = "404" ] && echo 1 || echo 0)"
+chk "Guest GET /api/trips remains protected (401 expected)" "$([ "$code" = "401" ] && echo 1 || echo 0)"
 
-code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/trips")
-chk "Phase 3 route /trips does NOT exist (404 expected)" "$([ "$code" = "404" ] && echo 1 || echo 0)"
+code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/perjalanan")
+chk "Guest GET /perjalanan redirects to login (302 expected)" "$([ "$code" = "302" ] && echo 1 || echo 0)"
 
 rm -f "$ADMIN_JAR" "$OPERATOR_JAR" "$DRIVER_JAR" "$GUEST_JAR"
 

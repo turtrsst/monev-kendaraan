@@ -123,6 +123,8 @@ final class Assignment
             'vehicle_id' => (int)$data['vehicle_id'],
             'driver_id' => (int)$data['driver_id'],
             'destination' => $data['destination'],
+            'destination_latitude' => self::coordinate($data['destination_latitude'] ?? null),
+            'destination_longitude' => self::coordinate($data['destination_longitude'] ?? null),
             'purpose' => $data['purpose'],
             'passenger_count' => isset($data['passenger_count']) ? (int)$data['passenger_count'] : 1,
             'passenger_notes' => $data['passenger_notes'] ?? null,
@@ -139,6 +141,7 @@ final class Assignment
         $update = [];
         $allowed = [
             'assignment_date', 'vehicle_id', 'driver_id', 'destination',
+            'destination_latitude', 'destination_longitude',
             'purpose', 'passenger_count', 'passenger_notes', 'st_reference',
             'sppd_reference', 'status', 'notes'
         ];
@@ -147,6 +150,8 @@ final class Assignment
             if (array_key_exists($field, $data)) {
                 if (in_array($field, ['vehicle_id', 'driver_id', 'passenger_count'], true)) {
                     $update[$field] = (int)$data[$field];
+                } elseif (in_array($field, ['destination_latitude', 'destination_longitude'], true)) {
+                    $update[$field] = self::coordinate($data[$field]);
                 } else {
                     $update[$field] = $data[$field];
                 }
@@ -158,6 +163,14 @@ final class Assignment
         }
 
         return DB::update('assignments', $update, 'id = :id', ['id' => $id]);
+    }
+
+    private static function coordinate(mixed $value): ?float
+    {
+        if ($value === null || (is_string($value) && trim($value) === '')) {
+            return null;
+        }
+        return is_numeric($value) ? (float)$value : null;
     }
 
     public static function cancel(int $id, ?string $reason = null): int

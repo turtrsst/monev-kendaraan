@@ -96,37 +96,33 @@ for ctrl in modules/vehicles/controllers/VehicleController.php \
 done
 
 # -------------------------------------------------------------
-# 2. HARD SCOPE LOCK & LEAKAGE CHECK (NO PHASE 3 IMPLEMENTATION)
+# 2. PHASE 2 REGRESSION SCOPE & PHASE 4 SCOPE LOCK
 # -------------------------------------------------------------
 note ""
-note "--- [2/4] Hard Scope Lock (Verification No Phase 3) ---"
+note "--- [2/4] Phase 2 Regression Scope / Phase 4 Lock ---"
 
-# TripService should not exist
+# Phase 3 now exists; require its base integration so the Phase 2 gate can run in this tree.
 if [ -f "app/services/TripService.php" ]; then
-  bad "Phase 3 leakage detected: app/services/TripService.php exists!"
+  ok "Phase 3 TripService is present (current application scope)"
 else
-  ok "no TripService.php in app/services/"
+  bad "missing current TripService.php"
 fi
-
-# Trip model should not exist
 if [ -f "app/models/Trip.php" ]; then
-  bad "Phase 3 leakage detected: app/models/Trip.php exists!"
+  ok "Phase 3 Trip model is present (current application scope)"
 else
-  ok "no Trip.php in app/models/"
+  bad "missing current Trip.php"
+fi
+if [ -f "modules/trips/controllers/TripController.php" ] && [ -f "api/trips/TripApiController.php" ]; then
+  ok "Phase 3 web and API controllers are present"
+else
+  bad "Phase 3 trip controllers missing"
 fi
 
-# TripController should not exist
-if [ -f "modules/trips/controllers/TripController.php" ] || [ -f "api/trips/TripApiController.php" ]; then
-  bad "Phase 3 leakage detected: TripController or TripApiController exists!"
+# Phase 4 scope lock: GPS event validation is Phase 3; OCR, ledger, and checklist remain absent.
+if [ -f "app/services/OcrService.php" ] || [ -f "app/services/ExpenseService.php" ] || [ -f "app/services/EquipmentChecklistService.php" ]; then
+  bad "Phase 4 service leakage detected!"
 else
-  ok "no Trip controllers in modules/ or api/"
-fi
-
-# No GPS tracking, OCR service, or expense ledger implementation
-if [ -f "app/services/GpsService.php" ] || [ -f "app/services/OcrService.php" ] || [ -f "app/services/ExpenseService.php" ]; then
-  bad "Phase 3+ services detected!"
-else
-  ok "no Phase 3+ services (GPS, OCR, Expense)"
+  ok "no Phase 4 OCR, expense, or equipment checklist services"
 fi
 
 # Check no git conflict markers (search without matching this runner file itself)

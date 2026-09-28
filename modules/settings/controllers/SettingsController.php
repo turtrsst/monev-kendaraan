@@ -23,6 +23,8 @@ final class SettingsController
         'app.hospital_name' => 'text:100',
         'app.logo_path' => 'text:255',
         'trip.destination_radius_default_m' => 'int:10:10000',
+        'trip.destination_tolerance_m' => 'int:0:10000',
+        'trip.gps_max_accuracy_m' => 'int:1:5000',
         'fuel.receipt_photo_required' => 'bool',
     ];
 
