@@ -90,6 +90,30 @@ $val = static fn (string $k, string $d = ''): string => (string)($assignment[$k]
                     </div>
 
                     <div class="col-12">
+                        <fieldset class="border rounded p-3">
+                            <legend class="float-none w-auto px-2 fs-6">Koordinat Tujuan (opsional)</legend>
+                            <p class="form-text mt-0">Masukkan koordinat dari sumber resmi/terverifikasi. Tidak ada geocoding otomatis; jika kosong, GPS kedatangan hanya menjadi bukti pendukung tanpa validasi jarak.</p>
+                            <?php if (isset($errors['destination_coordinates'])): ?>
+                                <div class="alert alert-danger py-2" role="alert"><?= e($errors['destination_coordinates']) ?></div>
+                            <?php endif; ?>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label class="form-label" for="destination_latitude">Latitude</label>
+                                    <input type="number" step="any" min="-90" max="90" inputmode="decimal"
+                                           class="form-control" id="destination_latitude" name="destination_latitude"
+                                           value="<?= e($val('destination_latitude')) ?>" placeholder="-7.1234567">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label" for="destination_longitude">Longitude</label>
+                                    <input type="number" step="any" min="-180" max="180" inputmode="decimal"
+                                           class="form-control" id="destination_longitude" name="destination_longitude"
+                                           value="<?= e($val('destination_longitude')) ?>" placeholder="110.1234567">
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+
+                    <div class="col-12">
                         <label class="form-label" for="purpose">Maksud &amp; Keperluan Penugasan <span class="text-danger">*</span></label>
                         <textarea class="form-control <?= isset($errors['purpose']) ? 'is-invalid' : '' ?>"
                                   id="purpose" name="purpose" rows="2" placeholder="Uraikan keperluan kedinasan atau rujukan pasien..." required><?= e($val('purpose')) ?></textarea>
