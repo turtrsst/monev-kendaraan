@@ -8,6 +8,8 @@ use Api\Vehicles\VehicleApiController;
 use Api\Drivers\DriverApiController;
 use Api\Ambulances\AmbulanceApiController;
 use Api\Assignments\AssignmentApiController;
+use Api\Trips\TripApiController;
+use Modules\Trips\Controllers\TripController;
 use Modules\Auth\Controllers\AuthController;
 use Modules\Dashboard\Controllers\DashboardController;
 use Modules\Settings\Controllers\SettingsController;
@@ -75,6 +77,19 @@ return function (Router $r): void {
     $r->post('/penugasan/batal/{id}', [AssignmentController::class, 'cancel'], ['auth', 'force_password_change', 'role:admin,operator', 'csrf']);
 
     // ========================================================
+    // PHASE 3 — TRIP / DIGITAL LOGBOOK
+    // ========================================================
+    $r->get('/perjalanan', [TripController::class, 'index'], ['auth', 'force_password_change']);
+    $r->get('/perjalanan/{id}', [TripController::class, 'show'], ['auth', 'force_password_change']);
+    $r->post('/perjalanan/buat/{assignment_id}', [TripController::class, 'create'], ['auth', 'force_password_change', 'role:admin,operator', 'csrf']);
+    $r->post('/perjalanan/{id}/ready', [TripController::class, 'ready'], ['auth', 'force_password_change', 'csrf']);
+    $r->post('/perjalanan/{id}/start', [TripController::class, 'start'], ['auth', 'force_password_change', 'csrf']);
+    $r->post('/perjalanan/{id}/arrival', [TripController::class, 'arrival'], ['auth', 'force_password_change', 'csrf']);
+    $r->post('/perjalanan/{id}/returning', [TripController::class, 'returning'], ['auth', 'force_password_change', 'csrf']);
+    $r->post('/perjalanan/{id}/complete', [TripController::class, 'complete'], ['auth', 'force_password_change', 'csrf']);
+    $r->post('/perjalanan/{id}/submit', [TripController::class, 'submit'], ['auth', 'force_password_change', 'csrf']);
+
+    // ========================================================
     // API (JSON) ROUTES
     // ========================================================
 
@@ -110,4 +125,15 @@ return function (Router $r): void {
     $r->post('/api/assignments', [AssignmentApiController::class, 'store'], ['auth', 'force_password_change', 'role:admin,operator', 'csrf']);
     $r->put('/api/assignments/{id}', [AssignmentApiController::class, 'update'], ['auth', 'force_password_change', 'role:admin,operator', 'csrf']);
     $r->post('/api/assignments/{id}/cancel', [AssignmentApiController::class, 'cancel'], ['auth', 'force_password_change', 'role:admin,operator', 'csrf']);
+
+    // Trips API — each write has a fixed server-side transition and CSRF check.
+    $r->get('/api/trips', [TripApiController::class, 'index'], ['auth', 'force_password_change']);
+    $r->get('/api/trips/{id}', [TripApiController::class, 'show'], ['auth', 'force_password_change']);
+    $r->post('/api/trips', [TripApiController::class, 'store'], ['auth', 'force_password_change', 'role:admin,operator', 'csrf']);
+    $r->post('/api/trips/{id}/ready', [TripApiController::class, 'ready'], ['auth', 'force_password_change', 'csrf']);
+    $r->post('/api/trips/{id}/start', [TripApiController::class, 'start'], ['auth', 'force_password_change', 'csrf']);
+    $r->post('/api/trips/{id}/arrival', [TripApiController::class, 'arrival'], ['auth', 'force_password_change', 'csrf']);
+    $r->post('/api/trips/{id}/returning', [TripApiController::class, 'returning'], ['auth', 'force_password_change', 'csrf']);
+    $r->post('/api/trips/{id}/complete', [TripApiController::class, 'complete'], ['auth', 'force_password_change', 'csrf']);
+    $r->post('/api/trips/{id}/submit', [TripApiController::class, 'submit'], ['auth', 'force_password_change', 'csrf']);
 };
