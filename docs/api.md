@@ -1,10 +1,6 @@
-# API & Endpoint — Phase 1
+# API & Endpoint — Phase 1–3
 
-Dokumen ini mencerminkan **hanya endpoint yang benar-benar ada pada Phase 1**
-(sumber: `app/config/routes.php` + controller terkait + `tests/http_phase1.sh`).
-**Belum ada** endpoint vehicles, drivers, assignments, trips, GPS, arrival,
-evidence/upload, expenses, OCR, maupun reporting — semua itu Phase 2+ dan
-sengaja tidak didokumentasikan di sini.
+Dokumen ini mencakup rute yang tersedia pada `app/config/routes.php` untuk foundation, master/penugasan Phase 2, dan eksekusi trip Phase 3. Phase 3 menambah GPS berbasis event saja; tidak ada upload bukti, pengeluaran, OCR, tracking berkelanjutan, atau reporting.
 
 Konvensi:
 
@@ -391,3 +387,41 @@ Error:
 | POST | `/api/assignments` | Yes | admin, operator | Required | API Buat Penugasan Baru |
 | PUT | `/api/assignments/{id}` | Yes | admin, operator | Required | API Update Penugasan |
 | POST | `/api/assignments/{id}/cancel` | Yes | admin, operator | Required | API Pembatalan Penugasan |
+
+---
+
+## Phase 3 — Trip / Digital Logbook
+
+Session cookie auth and CSRF rules remain unchanged. A trip state is never accepted from the request body; each endpoint invokes one fixed `TripService` operation. Actor ownership checks are server-side. Full lifecycle, state matrix, GPS classification and idempotency details are in [PHASE-3-TRIP-EXECUTION.md](PHASE-3-TRIP-EXECUTION.md).
+
+### Web routes
+
+| Method | Path | Auth / authorization | CSRF | Behavior |
+|---|---|---|---|---|
+| GET | `/perjalanan` | Yes; driver sees own trips, monitor read-only | — | Mobile-first trip board |
+| GET | `/perjalanan/{id}` | Yes; object access checked server-side | — | Trip detail and event log |
+| POST | `/perjalanan/buat/{assignment_id}` | admin, operator | Required | Create trip from ASSIGNED assignment; requires `action_uuid` |
+| POST | `/perjalanan/{id}/ready` | admin/operator or owning driver | Required | ASSIGNED → READY |
+| POST | `/perjalanan/{id}/start` | admin/operator or owning driver | Required | READY → STARTED, one GPS capture |
+| POST | `/perjalanan/{id}/arrival` | admin/operator or owning driver | Required | STARTED → ARRIVED, one GPS capture |
+| POST | `/perjalanan/{id}/returning` | admin/operator or owning driver | Required | ARRIVED → RETURNING |
+| POST | `/perjalanan/{id}/complete` | admin/operator or owning driver | Required | RETURNING → COMPLETED, one GPS capture |
+| POST | `/perjalanan/{id}/submit` | admin/operator or owning driver | Required | COMPLETED → SUBMITTED |
+
+### Trip API routes
+
+| Method | Path | Auth / authorization | CSRF | Behavior |
+|---|---|---|---|---|
+| GET | `/api/trips` | Yes; driver list scoped to own profile | — | Paginated trip list; optional valid status filter |
+| GET | `/api/trips/{id}` | Yes; role + ownership check | — | Trip and event history |
+| POST | `/api/trips` | admin, operator | Required | Body: `assignment_id`, `action_uuid`, optional `planned_departure_at`, `notes` |
+| POST | `/api/trips/{id}/ready` | Service checks management role/driver ownership | Required | ASSIGNED → READY |
+| POST | `/api/trips/{id}/start` | Service checks management role/driver ownership | Required | READY → STARTED; body may include `action_uuid`, GPS fields |
+| POST | `/api/trips/{id}/arrival` | Service checks management role/driver ownership | Required | STARTED → ARRIVED; body may include `action_uuid`, GPS fields |
+| POST | `/api/trips/{id}/returning` | Service checks management role/driver ownership | Required | ARRIVED → RETURNING |
+| POST | `/api/trips/{id}/complete` | Service checks management role/driver ownership | Required | RETURNING → COMPLETED; body may include `action_uuid`, GPS fields |
+| POST | `/api/trips/{id}/submit` | Service checks management role/driver ownership | Required | COMPLETED → SUBMITTED |
+
+For each lifecycle body, `action_uuid` must be an RFC-style UUID. GPS fields are `latitude`, `longitude`, and `accuracy_m`; optional `client_timestamp` is retained only as explicitly untrusted metadata. Missing GPS does not block an event; it is classified for review. Official times are always server/database time. CSRF uses `_csrf` in form/JSON or `X-CSRF-Token` header.
+
+All trip write responses use the standard JSON envelope. A repeated action with the same UUID and same payload returns the existing event with `idempotent: true`; UUID reuse for a different action or payload returns 409. Illegal state transitions return 409; malformed fields return 422; unauthorized trip IDs are hidden from other drivers using 404.
