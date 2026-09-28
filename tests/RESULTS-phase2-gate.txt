@@ -1,4 +1,4 @@
-=== PHASE 2 GATE RUNNER — 2026-09-25T09:42:10Z ===
+=== PHASE 2 GATE RUNNER — 2026-09-28T02:17:45Z ===
 
 --- [1/4] Static Code & Scope Checks ---
 [PASS] bash syntax: tests/http_phase2.sh
@@ -28,11 +28,11 @@
 [PASS] controller exists: api/ambulances/AmbulanceApiController.php
 [PASS] controller exists: api/assignments/AssignmentApiController.php
 
---- [2/4] Hard Scope Lock (Verification No Phase 3) ---
-[PASS] no TripService.php in app/services/
-[PASS] no Trip.php in app/models/
-[PASS] no Trip controllers in modules/ or api/
-[PASS] no Phase 3+ services (GPS, OCR, Expense)
+--- [2/4] Phase 2 Regression Scope / Phase 4 Lock ---
+[PASS] Phase 3 TripService is present (current application scope)
+[PASS] Phase 3 Trip model is present (current application scope)
+[PASS] Phase 3 web and API controllers are present
+[PASS] no Phase 4 OCR, expense, or equipment checklist services
 [PASS] no git conflict markers found
 
 --- [3/4] Runtime Environment Availability ---
